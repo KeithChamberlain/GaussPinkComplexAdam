@@ -4,41 +4,40 @@ author: "Keith Chamberlain"
 date: "2026-07-26"
 ---
 
-# Preliminary Performance Comparison between Gaussian vs. Pink Initializers and ComplexAdam and Adam Optimizers for Transformer Neural Networks
+# Preliminary Performance Comparison between models with Complex adam compared to traditional adam initialized with Gaussian or Pink Noise
 
-Gaussian initialization of transformer neural networks seems commonplace, yet there are other initialization values that can be used. Models may have less distance to cover from initialized values to functional weights with different initializers. Optimizers such as Adam are also commonplace and there seems to always be interest in possible improvements. Pink noise initialization was hypothesized to result in improved loss, accuracy and time over gaussian initialization. Complex Adam, which results in weights with magnitude and phase information was hypothesized to improve loss, accuracy and time. Results indicate surprising differences for each comparison, with gaussian initialization outperforming pink initialization for loss, accuracy and time; and complex adam outperforming adam for loss and accuracy, but not time for transformer neural networks trained on a python corpus. Future work on comparing transformer neural network architectures using different initializers and optimizers on benchmark tasks raises interesting questions that may impact architecture choice.
+Gaussian initialization of transformer neural networks seems commonplace, yet there are other initialization values that can be used. Models may have less distance to cover from initialized values to functional weights with different initializers. Optimizers such as Adam, or variants, are also common, and there seems to always be interest in possible improvements. An optimizer called Complex Adam, used to train complex weights, may be beneficial compared with Adam. Pink Noise initialization was hypothesized to result in improved loss, accuracy and time over Gaussian initialization. Complex Adam, which adds phase information to weights, was tested as a preliminary construct and was hypothesized to improve loss, accuracy and time. Pink Noise initialization out performed Gaussian intialization except for time. Complex Adam outperformed Adam for Loss and Accuracy, but not time. The one advantage of Pink Noise, at about 0.04 seconds, is outweighed by the reduction in accuracy of around 1.50%. Complex Adam's advantage of approximately -0.01 Loss equated to about +0.30% in accuracy in this comparison, which is perhaps imperceptible using a local model trained on code. While only three of the hypotheses held, and were related to Complex Adam for loss and accuracy, Pink Noise initialization only for training time, they don't appear to be important difference. This comparison indicates that Complex Adam doesn't break the model and it could be interesting to note whether any Pink Noise from initialization is more evident than in Gaussian initialized weights.
+
 
 ## Methods
 
-For 4 different variables, 1000 Small local transformer neural networks were separately trained on an M2 with 24 Gb unified RAM using a python corpus with two initialization and optimization architecture choices in a fully factorial 2x2 design using a resampling technique. Samples of 600 of the 1000 trials each of 4 groups were resampled 10,000 times. Evaluation included loss, next token accuracy and time. A normal approximation was assumed (no transformations) as reviewing histogram shapes which seemed to indicate the data are far enough from possible bounds. 
+For 4 different metrics: loss, accuracy, training time, and 1000 Small local Torch transformer neural networks were separately trained on an M2 with 24 Gb unified RAM using a python corpus with two initialization and optimization architecture choices in a fully factorial 2x2 design. Models varried by initialiation and optimizer used.
 
-### Models
+Three sum to zero orthogonal contrasts were created to test the mean differences of interest in a regression model, the slope from Gaussian initialization to Pink Noise initialization, the slope from Adam to Complex Adam, which identifies the groups mean differences due to the coding; and an interaction term to complete the factorial design. No post-hoc analyses were performed as the models coded the effects of interest directly.
 
-Histograms of the bootstrapped group distributiosn for each dependent variable were created. Their shape lent to fitting a model without transformation. Means of means across samples were calculated with bootstrapped confidence intervals. A statistical model is fit to the trial metrics for loss, accuracy and time(s). Sum to zero orthogonal contrasts were created to result in the parameter estimates being the mean difference between adam vs complex adam optimizers and gaussian vs pink noise weight initialization. A third code, for the interaction term, was included to ensure a full set of codes was used for the full factorial design. The interaction term was not interpreted as AdamVsComplex and GaussVsPink change direction and there was no hypothesis for the comparison. No post-hoc analyses were performed as the models coded the effects of interest directly.
+Individual estimated group means were related from the contrasts and the parameter estimates using the following relation:
 
-$$ loss, acc, secs = AdamVsComplex + GaussVsPink + C(AdamVsComplex * GaussVsPink) $$
-## Bias
+### Design Matrix with Constant Term
 
-Bias and resampling bias are presented as part of the results summaries.
+The factor coding/design matrix, presented below, is used to generate each of the comparison columns for regression. The codes table contains the contrast codes that code for the mean differences in the regression model, and their relation to individual group means is a direct translation. The design matrix does not need to be transposed here since groups are stored as rows.
 
-$$ bias_{boot} = \beta_{boot} - \beta_{orig} $$
+| Means | intercept | gauss vs pink | adam vs compelex | interaction |
+| :--- | :---: | :---: | :---: | ---: |
+| (gauss, adam)    | 1 | .5. |  .5 |  .25 |
+| (gauss, complex) | 1 | .5. | -.5 | -.25 |
+| (pink, adam)     | 1 | -.5 |  .5 | -.25 |
+| (pink, complex)  | 1 | -.5 | -.5 |  .25 |
 
-$$ bias_{resample} = mean(\beta_{boot} - \beta_{sample}) $$
+$$ \hat \mu_{g} = M \cdot \hat \beta $$
 
+A statistical model was fit to the trial metrics for loss, accuracy and training time(s). Sum to zero orthogonal contrasts were created to result in the parameter estimates being the mean difference between Adam vs Complex Adam optimizers and Gaussian vs Pink Noise weight initialization.
+
+
+$$ (loss, acc, secs) = AdamVsComplex + GaussVsPink + C(AdamVsComplex * GaussVsPink) $$
 
 ## Results
 
-Results are related each to loss, accuracy and time(s) analysis models presented in the figures and tables in the appendix. Initialization differences indicate gaussian initialization has lower loss, higher accuracy and is faster than pink-noise initialization, opposite to hypothesized outcomes. This may be explained in part that in non-published investigations into weight spectra for a different type of transformer NN, weights didn't resemble pink-noise due to adam optimization. The complex adam optimizer has lower loss, higher accuracy but took longer than adam by 0.2+ seconds, which, except for time, aligned with expectations. These findings may be expalinable in that comlex weight have phase and magnitude information instead of magnitude. 
+Loss is higher for Pink Noise initialization by around 0.06 related to an accuracy loss of about 1.50% though training time improved by 0.04s. Loss is **less** for Complex Adam than for Adam by 0.01, with a corresponding increase of accuracy by 0.3%. While reaching significance via the model, none of the differences are likely to be noticed on local models. This comparison indicates at least that Complex Adam doesn't break the model and the architecture difference can be further pursued. 
 
-## Limitations
+![Figure 1: Mean differences (top) and means (bottom) for comparisons](GaussPinkAdamComplexGraphs.jpg)
 
-No bootstrapped ANOVA table was included in this analysis.
-
-## Appendix
-
-![Figure 1: Means and bootstrapped confidence intervals show advantage of adam for initialization and complex adam for optimizer while complex adam is slightly slower](GaussPinkAdamComplexMeans.jpg)
-
-
-![Figure 2: Distributions are normal like without important tailing and are not near bounds so transformation is not indicated](GaussPinkAdamComplexHist.jpg)
-
-![Table 1: Regression summaries with boot and resampling bias](GaussPinkAdamComplexSummary.jpg)
